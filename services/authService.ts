@@ -14,13 +14,15 @@ export interface LoginCredentials {
 }
 
 export interface AuthResponse {
-  accessToken: string;
-  refreshToken?: string;
-  user: {
-    id: string;
-    email: string;
-    name: string;
-  };
+  access_token: string;
+  refresh_token: string;
+}
+
+export interface UserResponse {
+  id: string;
+  name: string;
+  email: string;
+  birthdate: string;
 }
 
 class AuthService {

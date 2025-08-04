@@ -16,7 +16,7 @@ interface AuthStore {
 
   // Actions
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (userData: { name: string; email: string; password: string }) => Promise<void>;
+  register: (userData: { name: string; email: string; birthdate: string; phoneNumber?: string; username: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
   clearError: () => void;
@@ -33,7 +33,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const response = await menteeAPI.login(credentials);
       set({
-        user: response.user,
         isAuthenticated: true,
         loading: false,
       });
@@ -52,7 +51,6 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     try {
       const response = await menteeAPI.register(userData);
       set({
-        user: response.user,
         isAuthenticated: true,
         loading: false,
       });

@@ -1,5 +1,5 @@
 import { Mentee, Meeting, PrayerRequest } from '@/types/mentee';
-import { authService, AuthResponse, LoginCredentials } from './authService';
+import { authService, AuthResponse, LoginCredentials, UserResponse } from './authService';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -93,30 +93,33 @@ class MenteeAPI {
   }
 
   // Authentication methods
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    console.log("🚀 ~ MenteeAPI ~ login ~ credentials:", credentials)
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(credentials),
-    });
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {    
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
 
-    if (!response.ok) {
-      throw new Error(`Login failed: ${response.status} - ${response.statusText}`);
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Login failed: ${response.status} - ${response.statusText} - ${errorText}`);
+      }
+
+      const authResponse: AuthResponse = await response.json();
+      
+      // Store tokens securely
+      await authService.storeTokens({
+        accessToken: authResponse.access_token,
+        refreshToken: authResponse.refresh_token,
+      });
+
+      return authResponse;
+    } catch (error) {
+      throw error;
     }
-
-    const authResponse: AuthResponse = await response.json();
-    console.log("🚀 ~ MenteeAPI ~ login ~ authResponse:", authResponse)
-    
-    // Store tokens securely
-    await authService.storeTokens({
-      accessToken: authResponse.accessToken,
-      refreshToken: authResponse.refreshToken,
-    });
-
-    return authResponse;
   }
 
   async logout(): Promise<void> {
@@ -136,14 +139,24 @@ class MenteeAPI {
   async register(userData: {
     name: string;
     email: string;
+    birthdate: string;
+    phoneNumber?: string;
+    username: string;
     password: string;
   }): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await fetch(`${API_BASE_URL}/mentor`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(userData),
+      body: JSON.stringify({
+        name: userData.name,
+        email: userData.email,
+        birthdate: userData.birthdate,
+        phoneNumber: userData.phoneNumber,
+        userName: userData.username,
+        pass: userData.password,
+      }),
     });
 
     if (!response.ok) {
@@ -151,12 +164,7 @@ class MenteeAPI {
     }
 
     const authResponse: AuthResponse = await response.json();
-    
-    // Store tokens securely
-    await authService.storeTokens({
-      accessToken: authResponse.accessToken,
-      refreshToken: authResponse.refreshToken,
-    });
+    console.log("🚀 ~ MenteeAPI ~ register ~ authResponse:", authResponse)
 
     return authResponse;
   }

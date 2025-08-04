@@ -17,20 +17,54 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
+  
+  // Registration fields
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [birthdate, setBirthdate] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const { login, register, loading, error, clearError } = useAuthStore();
 
   const handleSubmit = async () => {
-    if (!username || !password || (isRegistering && !name)) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
+    if (isRegistering) {
+      // Registration validation
+      if (!name || !email || !birthdate || !username || !password || !confirmPassword) {
+        Alert.alert('Error', 'Please fill in all required fields');
+        return;
+      }
+      
+      if (password !== confirmPassword) {
+        Alert.alert('Error', 'Passwords do not match');
+        return;
+      }
+      
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        Alert.alert('Error', 'Please enter a valid email address');
+        return;
+      }
+    } else {
+      // Login validation
+      if (!username || !password) {
+        Alert.alert('Error', 'Please fill in all fields');
+        return;
+      }
     }
 
     try {
       clearError();
       if (isRegistering) {
-        await register({ name, username, password });
+        await register({ 
+          name, 
+          email, 
+          birthdate,
+          phoneNumber: phoneNumber || undefined, // Only include if provided
+          username, 
+          password 
+        });
       } else {
         await login({ userName: username, pass: password });
       }
@@ -73,6 +107,51 @@ export default function LoginScreen() {
             </View>
           )}
 
+          {isRegistering && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <TextInput
+                style={styles.input}
+                value={email}
+                onChangeText={setEmail}
+                placeholder="Enter your email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                textContentType="emailAddress"
+                autoComplete="email"
+              />
+            </View>
+          )}
+
+          {isRegistering && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Birthdate</Text>
+              <TextInput
+                style={styles.input}
+                value={birthdate}
+                onChangeText={setBirthdate}
+                placeholder="YYYY-MM-DD"
+                keyboardType="default"
+                autoCapitalize="none"
+              />
+            </View>
+          )}
+
+          {isRegistering && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Phone Number (Optional)</Text>
+              <TextInput
+                style={styles.input}
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                placeholder="Enter your phone number"
+                keyboardType="phone-pad"
+                textContentType="telephoneNumber"
+                autoComplete="tel"
+              />
+            </View>
+          )}
+
             <View style={styles.inputContainer}>
             <Text style={styles.label}>Username</Text>
             <TextInput
@@ -100,6 +179,20 @@ export default function LoginScreen() {
             />
           </View>
 
+          {isRegistering && (
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Confirm Password</Text>
+              <TextInput
+                style={styles.input}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Confirm your password"
+                secureTextEntry
+                textContentType="password"
+              />
+            </View>
+          )}
+
           {error && (
             <View style={styles.errorContainer}>
               <Text style={styles.errorText}>{error}</Text>
@@ -125,6 +218,14 @@ export default function LoginScreen() {
             onPress={() => {
               setIsRegistering(!isRegistering);
               clearError();
+              // Clear form fields when switching modes
+              setName('');
+              setEmail('');
+              setBirthdate('');
+              setPhoneNumber('');
+              setConfirmPassword('');
+              setUsername('');
+              setPassword('');
             }}
           >
             <Text style={styles.switchButtonText}>
