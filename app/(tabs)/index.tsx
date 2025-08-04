@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
 import { useMenteeStore } from '@/store/menteeStore';
 import { format } from 'date-fns';
-import { Check, X, Clock } from 'lucide-react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function MenteesScreen() {
   const mentees = useMenteeStore((state) => state.mentees);
@@ -9,11 +9,11 @@ export default function MenteesScreen() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock size={20} color="#eab308" />;
+        return <Ionicons name="time" size={20} color="#eab308" />;
       case 'rejected':
-        return <X size={20} color="#ef4444" />;
+        return <Ionicons name="close" size={20} color="#ef4444" />;
       case 'completed':
-        return <Check size={20} color="#22c55e" />;
+        return <Ionicons name="checkmark" size={20} color="#22c55e" />;
       default:
         return null;
     }
