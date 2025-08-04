@@ -21,11 +21,14 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (!loading && fontsLoaded) {
-      if (!isAuthenticated) {
-        router.replace('/(auth)/login');
-      } else {
-        router.replace('/(tabs)');
-      }
+      // Add a small delay to ensure state is properly updated
+      setTimeout(() => {
+        if (!isAuthenticated) {
+          router.replace('/(auth)/login');
+        } else {
+          router.replace('/(tabs)');
+        }
+      }, 100);
     }
   }, [loading, isAuthenticated, fontsLoaded, router]);
 

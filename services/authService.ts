@@ -25,6 +25,12 @@ export interface UserResponse {
   birthdate: string;
 }
 
+interface JWTPayload {
+  userId?: string;
+  exp?: number;
+  iat?: number;
+}
+
 class AuthService {
   private accessToken: string | null = null;
   private refreshToken: string | null = null;
@@ -90,6 +96,35 @@ class AuthService {
     } catch (error) {
       console.error('Failed to clear tokens:', error);
     }
+  }
+
+  decodeToken(token: string): JWTPayload | null {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return payload;
+    } catch (error) {
+      console.error('Failed to decode token:', error);
+      return null;
+    }
+  }
+
+  async getUserFromToken(): Promise<{ userId: string; email?: string; name?: string } | null> {
+    const token = await this.getAccessToken();
+    if (!token) return null;
+    
+    const payload = this.decodeToken(token);
+    if (!payload) return null;
+    
+    // Extract userId from different possible fields
+    const userId = payload.userId;
+    if (!userId) {
+      console.error('No userId found in token payload');
+      return null;
+    }
+    
+    return {
+      userId: userId
+    };
   }
 
   isTokenExpired(token: string): boolean {

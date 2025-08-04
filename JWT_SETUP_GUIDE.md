@@ -54,29 +54,23 @@ Your backend should implement these endpoints:
 #### Authentication Endpoints:
 - `POST /auth/login` - User login
 - `POST /auth/register` - User registration  
-- `POST /auth/logout` - User logout
-- `POST /auth/refresh` - Token refresh
+- `POST /auth/refresh-token` - Token refresh
 
 #### Request/Response Examples:
 
 **Login Request:**
 ```json
 {
-  "email": "user@example.com",
-  "password": "password123"
+  "userName": "user@example.com",
+  "pass": "password123"
 }
 ```
 
 **Login/Register Response:**
 ```json
 {
-  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
-  "refreshToken": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": "user-id",
-    "email": "user@example.com", 
-    "name": "John Doe"
-  }
+  "access_token": "eyJhbGciOiJIUzI1NiIs...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
 }
 ```
 
@@ -107,7 +101,7 @@ import { useAuthStore } from '@/store/authStore';
 const { login, loading, error } = useAuthStore();
 
 try {
-  await login({ email: 'user@example.com', password: 'password' });
+  await login({ userName: 'user@example.com', pass: 'password' });
   // User is now logged in
 } catch (error) {
   // Handle login error

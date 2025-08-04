@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from 'react-native';
 import { useMenteeStore } from '@/store/menteeStore';
+import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
 import { useCallback } from 'react';
@@ -10,6 +11,10 @@ export default function MenteesScreen() {
   const loading = useMenteeStore((state) => state.loading);
   const error = useMenteeStore((state) => state.error);
   const fetchMentees = useMenteeStore((state) => state.fetchMentees);
+  
+  // Get user info from auth store
+  const user = useAuthStore((state) => state.user);
+  const userId = useAuthStore((state) => state.getUserId());
 
   const onRefresh = useCallback(() => {
     fetchMentees();

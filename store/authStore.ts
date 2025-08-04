@@ -3,9 +3,10 @@ import { authService, AuthResponse, LoginCredentials } from '@/services/authServ
 import { menteeAPI } from '@/services/menteeAPI';
 
 interface User {
-  id: string;
-  email: string;
-  name: string;
+  userId: string;
+  id?: string;
+  email?: string;
+  name?: string;
 }
 
 interface AuthStore {
@@ -20,6 +21,10 @@ interface AuthStore {
   logout: () => Promise<void>;
   checkAuthStatus: () => Promise<void>;
   clearError: () => void;
+  
+  // Getters
+  getCurrentUser: () => User | null;
+  getUserId: () => string | null;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -32,10 +37,27 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await menteeAPI.login(credentials);
-      set({
-        isAuthenticated: true,
-        loading: false,
-      });
+      
+      // Decode JWT to get user information
+      const userInfo = await authService.getUserFromToken();
+      console.log('👤 User info from token:', userInfo);
+      
+      if (userInfo) {
+        set({
+          user: {
+            userId: userInfo.userId
+          },
+          isAuthenticated: true,
+          loading: false,
+        });
+      } else {
+        // Fallback if we can't decode the token
+        set({
+          user: null,
+          isAuthenticated: true,
+          loading: false,
+        });
+      }
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : 'Login failed',
@@ -50,8 +72,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await menteeAPI.register(userData);
+      // Registration successful, but user needs to login to get tokens
       set({
-        isAuthenticated: true,
+        isAuthenticated: false, // User needs to login after registration
         loading: false,
       });
     } catch (error) {
@@ -65,24 +88,12 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   logout: async () => {
-    set({ loading: true });
-    try {
-      await menteeAPI.logout();
-      set({
-        user: null,
-        isAuthenticated: false,
-        loading: false,
-        error: null,
-      });
-    } catch (error) {
-      // Even if logout API fails, clear local state
-      set({
-        user: null,
-        isAuthenticated: false,
-        loading: false,
-        error: null,
-      });
-    }
+    set({
+      user: null,
+      isAuthenticated: false,
+      loading: false,
+      error: null,
+    });
   },
 
   checkAuthStatus: async () => {
@@ -92,12 +103,24 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const isAuthenticated = await authService.isAuthenticated();
       
       if (isAuthenticated) {
-        // You might want to fetch user data here if needed
-        // const user = await menteeAPI.getCurrentUser();
-        set({
-          isAuthenticated: true,
-          loading: false,
-        });
+        // Decode JWT to get user information
+        const userInfo = await authService.getUserFromToken();
+        
+        if (userInfo) {
+          set({
+            user: {
+              userId: userInfo.userId
+            },
+            isAuthenticated: true,
+            loading: false,
+          });
+        } else {
+          set({
+            user: null,
+            isAuthenticated: true,
+            loading: false,
+          });
+        }
       } else {
         set({
           isAuthenticated: false,
@@ -116,4 +139,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   clearError: () => set({ error: null }),
+  
+  // Getters
+  getCurrentUser: () => get().user,
+  getUserId: () => get().user?.userId || null,
 }));

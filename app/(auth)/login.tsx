@@ -12,6 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
   const [username, setUsername] = useState('');
@@ -26,6 +27,7 @@ export default function LoginScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const { login, register, loading, error, clearError } = useAuthStore();
+  const router = useRouter();
 
   const handleSubmit = async () => {
     if (isRegistering) {
@@ -65,8 +67,29 @@ export default function LoginScreen() {
           username, 
           password 
         });
+        // Registration successful - switch to login mode
+        Alert.alert(
+          'Registration Successful', 
+          'Your account has been created. Please log in with your credentials.',
+          [
+            {
+              text: 'OK',
+              onPress: () => {
+                setIsRegistering(false);
+                // Clear registration fields but keep username and password
+                setName('');
+                setEmail('');
+                setBirthdate('');
+                setPhoneNumber('');
+                setConfirmPassword('');
+              }
+            }
+          ]
+        );
       } else {
         await login({ userName: username, pass: password });
+        // Navigate to tabs after successful login
+        router.replace('/(tabs)');
       }
     } catch (error) {
       // Error is already set in the store

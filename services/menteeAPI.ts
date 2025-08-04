@@ -1,5 +1,6 @@
 import { Mentee, Meeting, PrayerRequest } from '@/types/mentee';
 import { authService, AuthResponse, LoginCredentials, UserResponse } from './authService';
+import { useAuthStore } from '@/store/authStore';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api';
 
@@ -23,7 +24,7 @@ class MenteeAPI {
     
     if (accessToken && authService.isTokenExpired(accessToken) && refreshToken) {
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        const response = await fetch(`${API_BASE_URL}/auth/refresh-token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -49,11 +50,10 @@ class MenteeAPI {
     }
   }
 
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  private async request<T>(url: string, options?: RequestInit): Promise<T> {
     // Try to refresh token if needed before making the request
     await this.refreshTokenIfNeeded();
     
-    const url = `${API_BASE_URL}${endpoint}`;
     const headers = await this.getAuthHeaders();
     
     const config: RequestInit = {
@@ -122,20 +122,6 @@ class MenteeAPI {
     }
   }
 
-  async logout(): Promise<void> {
-    try {
-      // Call logout endpoint to invalidate tokens on server
-      await this.request('/auth/logout', {
-        method: 'POST',
-      });
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-    } finally {
-      // Always clear local tokens
-      await authService.clearTokens();
-    }
-  }
-
   async register(userData: {
     name: string;
     email: string;
@@ -143,7 +129,7 @@ class MenteeAPI {
     phoneNumber?: string;
     username: string;
     password: string;
-  }): Promise<AuthResponse> {
+  }): Promise<UserResponse> {
     const response = await fetch(`${API_BASE_URL}/mentor`, {
       method: 'POST',
       headers: {
@@ -163,15 +149,22 @@ class MenteeAPI {
       throw new Error(`Registration failed: ${response.status} - ${response.statusText}`);
     }
 
-    const authResponse: AuthResponse = await response.json();
-    console.log("🚀 ~ MenteeAPI ~ register ~ authResponse:", authResponse)
+    const userResponse: UserResponse = await response.json();
 
-    return authResponse;
+    return userResponse;
   }
 
   // Mentee operations
   async getMentees(): Promise<Mentee[]> {
-    return this.request<Mentee[]>('/mentees/list/94f98a87-4859-4bc0-a809-b4c41b2638d7');
+    // Get the user ID from the auth store
+    const userId = useAuthStore.getState().getUserId();
+    
+    if (!userId) {
+      throw new Error('No user ID found. Please log in again.');
+    }
+    
+    console.log('🔍 Fetching mentees for user ID:', userId);
+    return this.request<Mentee[]>(`${API_BASE_URL}/mentee/list/${userId}`);
   }
 
   async getMenteeById(id: string): Promise<Mentee> {
