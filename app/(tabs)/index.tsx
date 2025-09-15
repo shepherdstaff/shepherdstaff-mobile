@@ -1,10 +1,24 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from 'react-native';
 import { useMenteeStore } from '@/store/menteeStore';
+import { useAuthStore } from '@/store/authStore';
 import { format } from 'date-fns';
 import { Ionicons } from '@expo/vector-icons';
+import { useCallback } from 'react';
+import { Mentee } from '@/types/mentee';
 
 export default function MenteesScreen() {
   const mentees = useMenteeStore((state) => state.mentees);
+  const loading = useMenteeStore((state) => state.loading);
+  const error = useMenteeStore((state) => state.error);
+  const fetchMentees = useMenteeStore((state) => state.fetchMentees);
+  
+  // Get user info from auth store
+  const user = useAuthStore((state) => state.user);
+  const userId = useAuthStore((state) => state.getUserId());
+
+  const onRefresh = useCallback(() => {
+    fetchMentees();
+  }, [fetchMentees]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -19,7 +33,7 @@ export default function MenteesScreen() {
     }
   };
 
-  const renderMentee = ({ item: mentee }) => (
+  const renderMentee = ({ item: mentee }: { item: Mentee }) => (
     <TouchableOpacity style={styles.menteeCard}>
       <View style={styles.menteeHeader}>
         <Image
@@ -51,12 +65,37 @@ export default function MenteesScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>My Mentees</Text>
-      <FlatList
-        data={mentees}
-        renderItem={renderMentee}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-      />
+      
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Error: {error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchMentees}>
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {loading && mentees.length === 0 ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#6366f1" />
+          <Text style={styles.loadingText}>Loading mentees...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={mentees}
+          renderItem={renderMentee}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          refreshControl={
+            <RefreshControl
+              refreshing={loading}
+              onRefresh={onRefresh}
+              colors={['#6366f1']}
+              tintColor="#6366f1"
+            />
+          }
+        />
+      )}
     </View>
   );
 }
@@ -134,5 +173,44 @@ const styles = StyleSheet.create({
   },
   statusContainer: {
     marginLeft: 8,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 50,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#64748b',
+  },
+  errorContainer: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#fecaca',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 16,
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#dc2626',
+    marginBottom: 12,
+  },
+  retryButton: {
+    backgroundColor: '#6366f1',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  retryText: {
+    fontSize: 14,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#ffffff',
   },
 });

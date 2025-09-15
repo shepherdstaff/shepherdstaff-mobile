@@ -1,9 +1,38 @@
-import { View, Text, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Switch, TouchableOpacity, Alert } from 'react-native';
 import { useState } from 'react';
+import { useAuthStore } from '@/store/authStore';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [calendarSynced, setCalendarSynced] = useState(false);
+  const { logout, loading, user } = useAuthStore();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logout();
+              router.replace('/(auth)/login');
+            } catch (error) {
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -31,6 +60,26 @@ export default function SettingsScreen() {
         >
           <Text style={[styles.buttonText, calendarSynced && styles.buttonTextDisabled]}>
             {calendarSynced ? 'Calendar Synced' : 'Sync Calendar'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Account</Text>
+        {user && (
+          <View style={styles.userInfo}>
+            <Text style={styles.userInfoLabel}>Signed in as:</Text>
+            <Text style={styles.userInfoText}>{user.name}</Text>
+            <Text style={styles.userInfoEmail}>{user.email}</Text>
+          </View>
+        )}
+        <TouchableOpacity
+          style={[styles.button, styles.logoutButton]}
+          onPress={handleLogout}
+          disabled={loading}
+        >
+          <Text style={[styles.buttonText, styles.logoutButtonText]}>
+            {loading ? 'Logging out...' : 'Logout'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -90,5 +139,36 @@ const styles = StyleSheet.create({
   },
   buttonTextDisabled: {
     color: '#94a3b8',
+  },
+  userInfo: {
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  userInfoLabel: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#64748b',
+    marginBottom: 4,
+  },
+  userInfoText: {
+    fontSize: 16,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#1e293b',
+    marginBottom: 2,
+  },
+  userInfoEmail: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#64748b',
+  },
+  logoutButton: {
+    backgroundColor: '#ef4444',
+  },
+  logoutButtonText: {
+    color: '#ffffff',
   },
 });
