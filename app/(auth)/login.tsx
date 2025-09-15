@@ -18,7 +18,7 @@ export default function LoginScreen() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
-  
+
   // Registration fields
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -32,16 +32,23 @@ export default function LoginScreen() {
   const handleSubmit = async () => {
     if (isRegistering) {
       // Registration validation
-      if (!name || !email || !birthdate || !username || !password || !confirmPassword) {
+      if (
+        !name ||
+        !email ||
+        !birthdate ||
+        !username ||
+        !password ||
+        !confirmPassword
+      ) {
         Alert.alert('Error', 'Please fill in all required fields');
         return;
       }
-      
+
       if (password !== confirmPassword) {
         Alert.alert('Error', 'Passwords do not match');
         return;
       }
-      
+
       // Basic email validation
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
@@ -59,17 +66,17 @@ export default function LoginScreen() {
     try {
       clearError();
       if (isRegistering) {
-        await register({ 
-          name, 
-          email, 
+        await register({
+          name,
+          email,
           birthdate,
           phoneNumber: phoneNumber || undefined, // Only include if provided
-          username, 
-          password 
+          username,
+          password,
         });
         // Registration successful - switch to login mode
         Alert.alert(
-          'Registration Successful', 
+          'Registration Successful',
           'Your account has been created. Please log in with your credentials.',
           [
             {
@@ -82,8 +89,8 @@ export default function LoginScreen() {
                 setBirthdate('');
                 setPhoneNumber('');
                 setConfirmPassword('');
-              }
-            }
+              },
+            },
           ]
         );
       } else {
@@ -175,7 +182,7 @@ export default function LoginScreen() {
             </View>
           )}
 
-            <View style={styles.inputContainer}>
+          <View style={styles.inputContainer}>
             <Text style={styles.label}>Username</Text>
             <TextInput
               style={styles.input}
@@ -187,7 +194,7 @@ export default function LoginScreen() {
               textContentType="username"
               autoComplete="username"
             />
-            </View>
+          </View>
 
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Password</Text>
